@@ -30,25 +30,33 @@ function TopNav() {
   return (
     <nav className="flex font-uber gap-[12px] items-center justify-center leading-[1.7] text-[15px] text-white/40 tracking-[0.45px] mb-[60px] sm:mb-[134px] w-full max-w-[636px] mx-auto px-6 sm:px-0">
       <a
-        href="#"
+        href="https://drive.google.com/file/d/10xFeXzz7nBeD9DeeA03Ox0jqFnbsZWh2/view?usp=drive_link"
+        target="_blank"
+        rel="noopener noreferrer"
         className="hover:text-white transition-colors font-[TT_Hoves_Pro]"
       >
         Resume
       </a>
       <a
-        href="#"
+        href="https://medium.com/@aarontn"
+        target="_blank"
+        rel="noopener noreferrer"
         className="hover:text-white transition-colors font-[TT_Hoves_Pro]"
       >
         Thoughts
       </a>
       <a
-        href="#"
+        href="https://dribbble.com/toilatinhs"
+        target="_blank"
+        rel="noopener noreferrer"
         className="hover:text-white transition-colors font-[TT_Hoves_Pro]"
       >
         Playground
       </a>
       <a
-        href="#"
+        href="https://www.linkedin.com/in/aarontinh/"
+        target="_blank"
+        rel="noopener noreferrer"
         className="hover:text-white transition-colors font-[TT_Hoves_Pro]"
       >
         Linkedin
@@ -228,6 +236,19 @@ import { useState } from "react";
 
 export function Portfolio() {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [initialMessage, setInitialMessage] = useState<string>("");
+
+  const handleOpenChat = (message?: string) => {
+    if (message) {
+      setInitialMessage(message);
+    }
+    setIsChatOpen(true);
+  };
+
+  const handleCloseChat = () => {
+    setIsChatOpen(false);
+    setInitialMessage("");
+  };
 
   return (
     <div className="relative w-full min-h-screen flex flex-col items-center pt-[35px] pb-[100px]">
@@ -247,8 +268,8 @@ export function Portfolio() {
         </main>
       </div>
 
-      {!isChatOpen && <ChatWidget onOpen={() => setIsChatOpen(true)} />}
-      <ChatOverlay isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      {!isChatOpen && <ChatWidget onOpen={handleOpenChat} />}
+      <ChatOverlay isOpen={isChatOpen} onClose={handleCloseChat} initialMessage={initialMessage} />
     </div>
   );
 }

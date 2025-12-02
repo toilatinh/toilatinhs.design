@@ -12,12 +12,20 @@ export class ElevenLabsService {
     private ws: WebSocket | null = null;
     private isConnected = false;
     private messageQueue: string[] = [];
+
     private onMessageCallback: ((message: Message) => void) | null = null;
     private onStatusCallback: ((status: 'connecting' | 'connected' | 'disconnected' | 'error') => void) | null = null;
+    private onPartialMessageCallback: ((content: string) => void) | null = null;
 
     constructor() {
         this.connect();
     }
+
+    // Update ws.onmessage to handle partial responses
+    // duplicate connect implementation removed
+
+
+    // duplicate constructor removed
 
     private async getSignedUrl(): Promise<string> {
         try {
@@ -73,15 +81,35 @@ export class ElevenLabsService {
                     // Handle different message types
                     if (data.type === 'conversation_initiation_metadata') {
                         console.log('🎤 Conversation initiated');
+
                     } else if (data.type === 'agent_response') {
-                        // Agent's text response - extract from agent_response_event
-                        const content = data.agent_response_event?.agent_response || data.agent_response || '';
-                        if (content) {
-                            this.onMessageCallback?.({
-                                role: 'assistant',
-                                content,
-                                timestamp: new Date(),
-                            });
+                        const event = data.agent_response_event;
+                        if (event) {
+                            const content = event.agent_response || '';
+                            if (content) {
+                                // Accumulate content
+                                this.currentResponse += content;
+
+                                // Send partial update with full accumulated text
+                                this.onPartialMessageCallback?.(this.currentResponse);
+
+                                // Debounce final message
+                                if (this.responseTimeout) {
+                                    clearTimeout(this.responseTimeout);
+                                }
+
+                                this.responseTimeout = setTimeout(() => {
+                                    if (this.currentResponse) {
+                                        this.onMessageCallback?.({
+                                            role: 'assistant',
+                                            content: this.currentResponse,
+                                            timestamp: new Date(),
+                                        });
+                                        this.currentResponse = "";
+                                        this.responseTimeout = null;
+                                    }
+                                }, 1000); // 1 second silence implies end of turn
+                            }
                         }
                     } else if (data.type === 'user_transcript') {
                         // User's transcribed speech (if using voice)
@@ -119,11 +147,21 @@ export class ElevenLabsService {
         }
     }
 
+    private currentResponse: string = "";
+    private responseTimeout: ReturnType<typeof setTimeout> | null = null;
+
     sendMessage(text: string) {
         if (!this.isConnected || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
             console.log('⏳ Queueing message (not connected yet)');
             this.messageQueue.push(text);
             return;
+        }
+
+        // Clear any pending response state when user sends a new message
+        this.currentResponse = "";
+        if (this.responseTimeout) {
+            clearTimeout(this.responseTimeout);
+            this.responseTimeout = null;
         }
 
         try {
@@ -149,6 +187,11 @@ export class ElevenLabsService {
 
     onMessage(callback: (message: Message) => void) {
         this.onMessageCallback = callback;
+    }
+
+    // Register callback for partial streaming messages
+    onPartialMessage(callback: (content: string) => void) {
+        this.onPartialMessageCallback = callback;
     }
 
     onStatus(callback: (status: 'connecting' | 'connected' | 'disconnected' | 'error') => void) {

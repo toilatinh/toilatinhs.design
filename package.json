@@ -40,6 +40,7 @@
             "react-day-picker": "^8.10.1",
             "react-dom": "^18.3.1",
             "react-hook-form": "^7.55.0",
+            "react-markdown": "^10.1.0",
             "react-resizable-panels": "^2.1.7",
             "recharts": "^2.15.2",
             "sonner": "^2.0.3",
@@ -51,11 +52,14 @@
             "@types/react": "^19.2.7",
             "@types/react-dom": "^19.2.3",
             "@vitejs/plugin-react-swc": "^3.10.2",
+            "gh-pages": "^6.3.0",
             "typescript": "^5.9.3",
             "vite": "6.3.5"
       },
       "scripts": {
             "dev": "vite",
-            "build": "vite build"
+            "build": "vite build",
+            "predeploy": "npm run build",
+            "deploy": "gh-pages -d build"
       }
 }
